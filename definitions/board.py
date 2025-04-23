@@ -22,13 +22,15 @@ class Pawn:
         WHITE = "X"
         BLACK = "O"
 
-    def __init__(self, color: Color) -> None:
+    def __init__(self, color: Color | str) -> None:
         """
         Tworzy nowego piona  wybranym kolorze
 
         :param color: Kolor piona
-        :type color: Color
+        :type color: Color | str
         """
+        if isinstance(color, str):
+            color = Pawn.Color(color)
         self.color = color
 
     def __str__(self):
@@ -99,7 +101,12 @@ class Move:
         """
         pass
 
-    def __init__(self, board: 'Board', color: Pawn.Color, column: int, amount: int) -> None:
+    def __init__(self,
+                 board: 'Board',
+                 color: Pawn.Color,
+                 column: int,
+                 amount: int,
+                 auto_validate: bool = False) -> None:
         """
         Tworzy instancję klasy `Move` - opis pojedynczego ruchu piona na planszy.
 
@@ -111,6 +118,8 @@ class Move:
         :type column: int
         :param amount: Liczba pól, o którą przesuwa się piona
         :type amount: int
+        :param auto_validate: Opcja, która sprawia, że ruch jest walidowany bezpośrednio po utworzeniu
+        :type auto_validate: bool
 
         :raise AttributeError: Błąd rzucany, gdy podano nieprawidłowy kolor piona
         :raise InvalidMove: Błąd rzucany, gdy walidacja ruch zakończy się porażką
@@ -128,7 +137,8 @@ class Move:
         self.from_field = self._find_from_field()
         self.to_field = self._calculate_to_field(amount)
 
-        self.validate()
+        if auto_validate:
+            self.validate()
 
     def __str__(self) -> str:
         return (f'Ruch {self.color.name}: kolumna [{self.column}] '
@@ -172,6 +182,7 @@ class Move:
             return self.from_field + amount
         if self.color == Pawn.Color.BLACK:
             return self.from_field - amount
+        raise ValueError("Błędnie zdefiniowany kolor piona.")
 
 
 
@@ -229,6 +240,8 @@ class Board:
         :param with_pawns: Automatyczne wypełnianie planszy pionami
         :type with_pawns: bool
         """
+        if n <= 0 or m <= 0:
+            raise ValueError(f"Nie można utworzyć planszy o wymiarach {n} x {m}. Liczby kolumn i wierszy muszą być dodatnie.")
         self.n = n
         self.m = m
         self.fields = []
@@ -299,10 +312,10 @@ class Board:
             self.clear_all_pawns()
 
         for i in range(self.n):
-            self.fields[0][i].add_pawn(Pawn(Pawn.Color.WHITE))
+            self.fields[i][0].add_pawn(Pawn(Pawn.Color.WHITE))
 
         for i in range(self.n):
-            self.fields[self.m - 1][i].add_pawn(Pawn(Pawn.Color.BLACK))
+            self.fields[i][self.m - 1].add_pawn(Pawn(Pawn.Color.BLACK))
 
     def clear_all_pawns(self) -> None:
         """
@@ -352,7 +365,15 @@ class Board:
         :type move: Move
 
         :return: None
+
+        :raise Move.InvalidMove: if validation fails
         """
         move.validate()
 
-        #todo
+        pawn = self.get(move.column, move.from_field).pawn
+        if pawn is None:
+            raise Move.InvalidMove(f'Na polu [{move.column}, {move.from_field}] nie ma piona.')
+        self.get(move.column, move.from_field).clear_pawn()
+        self.get(move.column, move.to_field).add_pawn(pawn)
+        self.moves.append(move)
+
