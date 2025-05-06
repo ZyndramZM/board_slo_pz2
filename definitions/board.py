@@ -273,6 +273,26 @@ class Board:
             column = ord(column.lower()) - ord('a')
         return column
 
+    def print(self) -> None:
+        """
+        Wypisuje uproszczony wygląd planszy
+        """
+        print("   " + "".join([chr(i+ord('A')) for i in range(self.n)]))
+        for j in range(self.m):
+            row = str(j)
+            if j < 10:
+                row += " "
+            row += " "
+            for i in range(self.n):
+                field = self.fields[i][j]
+                if field.pawn is None:
+                    row += '.'
+                elif field.pawn.color == Pawn.Color.BLACK:
+                    row += 'B'
+                else:
+                    row += 'W'
+            print(row)
+
     def get(self, column: str | int, row: int) -> Field:
         """
         Zwraca pole planszy zadane przez numer / literę kolumny i numer wiersza
