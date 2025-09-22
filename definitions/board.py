@@ -5,7 +5,6 @@ Moduł "board" zawiera definicje wszystkich elementów planszy:
 * Field - pole planszy
 * Board - zbiór wszystkich pól planszy
 """
-from argparse import ArgumentError
 from enum import Enum
 from typing import Optional, List
 
